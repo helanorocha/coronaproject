@@ -168,27 +168,28 @@ scene:addEventListener( "destroy", scene )
 -----------------------------------------------------------------------------------------
 
 -------------------Eventos do teclado--------------------------------------
-
-
+local action = {
+  [-1] = function (barrel) barrel.x=80 end,
+  [0] = function (barrel) barrel.x=155 end,
+  [1] = function (barrel)barrel.x=220 end
+}
+local countArrow = 0
 -- Called when a key event has been received
 local function onKeyEvent( event )
     -- Print which key was pressed down/up
     local message = "Key '" .. event.keyName .. "' was pressed " .. event.phase
     print( message )
+		if  event.phase == "down" then
+		    -- If the "back" key was pressed on Android or Windows Phone, prevent it from backing out of the app
+		    if ( event.keyName == "left" and countArrow>-1) then
+					countArrow = countArrow-1
+		    end
 
-    -- If the "back" key was pressed on Android or Windows Phone, prevent it from backing out of the app
-    if ( event.keyName == "left" ) then
-			if barrel.x > 48 then
-				barrel.x = barrel.x -20
-				--grass.x = grass.x -20
-			end
-    end
+				if ( event.keyName == "right" and countArrow<1) then
+					countArrow = countArrow+1
+				end
 
-		if ( event.keyName == "right") then
-			if barrel.x < 260 then
-				barrel.x = barrel.x +20
-				--grass.x = grass.x +20
-			end
+				action[countArrow](barrel)
 		end
     -- IMPORTANT! Return false to indicate that this app is NOT overriding the received key
     -- This lets the operating system execute its default handling of the key
