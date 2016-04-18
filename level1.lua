@@ -17,6 +17,7 @@ local runtime = 0
 
 local barrel, text
 local pontos = 0
+local delayGerarPedra = 2600
 
 -- Set Variables
 _W = display.contentWidth; -- Get the width of the screen
@@ -42,10 +43,16 @@ local function createBackground(sceneGroup)
 end
 
 local function move(event)
+
+		delayGerarPedra = 4000 - (pontos * 100)
+
+		physics.setGravity( 0, 9.6 + pontos )
+
 		-- move backgrounds to the left by scrollSpeed, default is 8
-		bg1.y = bg1.y - scrollSpeed
-		bg2.y = bg2.y - scrollSpeed
-		bg3.y = bg3.y - scrollSpeed
+		local velocidade = scrollSpeed + (pontos/10)
+		bg1.y = bg1.y - velocidade
+		bg2.y = bg2.y - velocidade
+		bg3.y = bg3.y - velocidade
 
 		-- Set up listeners so when backgrounds hits a certain point off the screen,
 		-- move the background to the right off screen
@@ -63,16 +70,25 @@ end
 --- gerar pedra
 local count = 1
 local function gerarPedra(sceneGroup)
+		local qtPedras = math.random(1,2)
+		for i = 1, qtPedras do
+				local barrelDrop = display.newImageRect( "rock.png", 50, 50 )
+				local posX = math.random(1,3)
+				local pos = {
+				  [1] = function (barrel) barrel.x=(_W / 3 ) - 20 end,
+				  [2] = function (barrel) barrel.x= (_W / 3) + 50 end,
+				  [3] = function (barrel)barrel.x= _W - 80 end
+				}
+				pos[posX](barrelDrop)
+				barrelDrop.y = -50
+				count = count + 1
+				barrelDrop.rotation = 1
+				barrelDrop.myName = 'Pedra'
 
-		local barrelDrop = display.newImageRect( "rock.png", 50, 50 )
-		barrelDrop.x, barrelDrop.y = math.random(49,259), -50
-		count = count + 1
-		barrelDrop.rotation = 5
-		physics.addBody( barrelDrop, { density=0.8, friction=0.6 } )
-		sceneGroup:insert(barrelDrop)
+				physics.addBody( barrelDrop, { density=1.0, friction=0.2 } )
+				sceneGroup:insert(barrelDrop)
+		end
 end
-
-
 
 -- forward declarations and other locals
 local screenW, screenH, halfW = display.contentWidth, display.contentHeight, display.contentWidth*0.5
@@ -94,7 +110,7 @@ local beam = {}
 		beam[i]:setFillColor( 1.0, 1.0, 1.0 )
 		beam[i].x, beam[i].y = math.random(barrel.x - 30,barrel.x + 30) ,  math.random(barrel.y+20,barrel.y + 40)
 		beam[i].alpha = 0.6
-		beam[i].trans = transition.to(beam[i], { x = barrel.x - math.random(100,150), y = barrel.y - math.random (190, 250), alpha = 0.0, time = math.random(1000, 1200), delay = 100, onComplete = function() if beam[i] then beam[i]:removeSelf() end end })
+		beam[i].trans = transition.to(beam[i], { x = barrel.x , y = barrel.y - math.random (190, 250), alpha = 0.0, time = math.random(1000, 1200), delay = 100, onComplete = function() if beam[i] then beam[i]:removeSelf() end end })
 	end
 end
 local texto = display.newText( "Pontos: "..pontos, _W - 50, _H - _H - 20, native.systemFont, 16 )
@@ -121,7 +137,8 @@ function scene:create( event )
 	local callfire = function() return fire(sceneGroup) end
 	timer.performWithDelay(200, fire, -1)
 	barrel.rotation = 0
-	
+	barrel.myName = 'Barril'
+
 	-- add physics to the barrel
 	physics.addBody( barrel, "static", { density=0.8, friction=0.6 } )
 
@@ -132,7 +149,7 @@ function scene:create( event )
 	-- chamando gerarOBJETOS aleatorios
 	local generate = function() return gerarPedra(sceneGroup) end
 	sceneGroup:insert(texto)
-	timer.performWithDelay(4000, generate, -1)
+	timer.performWithDelay(delayGerarPedra, generate, -1)
 	timer.performWithDelay(50, moveBarrel, 5000)
 	timer.performWithDelay(1000, atualizarPontos, -1)
 
@@ -221,6 +238,27 @@ local function onKeyEvent( event )
     -- This lets the operating system execute its default handling of the key
     return false
 end
+
+-- Collision event
+local laserSound = audio.loadSound( "rock-crash.wav" )
+
+local function onGlobalCollision( event )
+		local laserChannel = audio.play( laserSound )
+    if ( event.object1.myName == "Pedra" ) then
+        event.object1:removeSelf()
+		end
+		if ( event.object1.myName == "Barril" ) then
+        pontos = pontos -10
+				if pontos < 0 then
+					pontos = 0
+				end
+		end
+    if ( event.object2.myName == "Pedra" ) then
+        event.object2:removeSelf()
+    end
+end
+
+Runtime:addEventListener( "collision", onGlobalCollision )
 
 
 -- Add the key event listener
