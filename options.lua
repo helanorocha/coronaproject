@@ -16,10 +16,10 @@ local widget = require "widget"
 local playBtn
 
 -- 'onRelease' event listener for playBtn
-local function onPlayBtnRelease()
+local function onAboutBtnRelease()
 
 	-- go to level1.lua scene
-	composer.gotoScene( "level1", "fade", 500 )
+	composer.gotoScene( "about", "fade", 500 )
 
 	return true	-- indicates successful touch
 end
@@ -41,46 +41,72 @@ function scene:create( event )
 	-- INSERT code here to initialize the scene
 	-- e.g. add display objects to 'sceneGroup', add touch listeners, etc.
 
-	-- display a background image
-	local background = display.newImageRect( "background.jpg", display.contentWidth, display.contentHeight )
+  local background = display.newImageRect( "background.jpg", display.contentWidth, display.contentHeight )
 	background.anchorX = 0
 	background.anchorY = 0
 	background.x, background.y = 0, 0
 
-	-- create/position logo/title image on upper-half of the screen
-	local titleLogo = display.newImageRect( "logo.png", 264, 42 )
-	titleLogo.x = display.contentWidth * 0.5
-	titleLogo.y = 100
-
 	-- create a widget button (which will loads level1.lua on release)
-	playBtn = widget.newButton{
-		label="Play",
-		labelColor = { default={000}, over={128} },
+	soundLabel = widget.newButton{
+		label="Enable sound: ",
+		labelColor = { default={000}, over={000} },
 		default="button.png",
-		over="button-over.png",
-		width=154, height=40,
-		onRelease = onPlayBtnRelease	-- event listener function
+		over="button.png",
+		width=154, height=40
 	}
-	playBtn.x = display.contentWidth*0.5
-	playBtn.y = display.contentHeight - 155
+	soundLabel.x = display.contentWidth*0.4
+	soundLabel.y = display.contentHeight - 175
+
+  soundYes = widget.newButton{
+    label="Yes",
+    labelColor = { default={000}, over={128} },
+    default="button.png",
+    over="button-over.png",
+    width=30, height=40
+  }
+  soundYes.x = (display.contentWidth*0.4) + 70
+  soundYes.y = display.contentHeight - 175
+
+  soundNo = widget.newButton{
+    label="No",
+    labelColor = { default={000}, over={128} },
+    default="button.png",
+    over="button-over.png",
+    width=30, height=40
+  }
+  soundNo.x = (display.contentWidth*0.4) + 100
+  soundNo.y = display.contentHeight - 175
 
 	-- create a widget button (which will loads level1.lua on release)
-	optButton = widget.newButton{
-		label="Options",
+	backBtn = widget.newButton{
+		label="Back",
 		labelColor = { default={000}, over={128} },
 		default="button.png",
 		over="button-over.png",
 		width=154, height=40,
 		onRelease = onOptButtonRelease	-- event listener function
 	}
-	optButton.x = display.contentWidth*0.5
-	optButton.y = display.contentHeight - 125
+	backBtn.x = display.contentWidth*0.5
+	backBtn.y = display.contentHeight - 125
+
+  aboutBtn = widget.newButton{
+		label="About",
+		labelColor = { default={000}, over={128} },
+		default="button.png",
+		over="button-over.png",
+		width=154, height=40,
+		onRelease = onAboutBtnRelease	-- event listener function
+	}
+	aboutBtn.x = display.contentWidth*0.5
+	aboutBtn.y = display.contentHeight - 148
 
 	-- all display objects must be inserted into group
-	sceneGroup:insert( background )
-	sceneGroup:insert( titleLogo )
-	sceneGroup:insert( playBtn )
-	sceneGroup:insert( optButton )
+  sceneGroup:insert( background )
+	sceneGroup:insert( soundLabel )
+  sceneGroup:insert( soundYes )
+  sceneGroup:insert( soundNo )
+  sceneGroup:insert( backBtn )
+  sceneGroup:insert( aboutBtn )
 end
 
 function scene:show( event )

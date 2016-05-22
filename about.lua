@@ -13,20 +13,11 @@ local widget = require "widget"
 --------------------------------------------
 
 -- forward declarations and other locals
-local playBtn
 
--- 'onRelease' event listener for playBtn
-local function onPlayBtnRelease()
-
-	-- go to level1.lua scene
-	composer.gotoScene( "level1", "fade", 500 )
-
-	return true	-- indicates successful touch
-end
 
 --  'onRelease' even listener options
 
-local function onOptButtonRelease()
+local function onBackButtonRelease()
 
 	composer.gotoScene( "options", "fade", 500 )
 
@@ -35,52 +26,21 @@ end
 
 function scene:create( event )
 	local sceneGroup = self.view
-
+	display.setDefault("fillColor", 1.0, 1.0, 1.0, 1.0)
 	-- Called when the scene's view does not exist.
 	--
 	-- INSERT code here to initialize the scene
 	-- e.g. add display objects to 'sceneGroup', add touch listeners, etc.
+	local rect = display.newRect(150,150,display.contentWidth,display.contentHeight)
 
-	-- display a background image
-	local background = display.newImageRect( "background.jpg", display.contentWidth, display.contentHeight )
-	background.anchorX = 0
-	background.anchorY = 0
-	background.x, background.y = 0, 0
+	local aboutText = display.newText("Hello, is it me youre looking for.... I can see it in your eyes, I can see it in your smile..... youre all ive ever wanted... but its all open wide.....", 0, 40, nil, nil, 150, 150)
+	aboutText.x = 0; aboutText.y = 10
+	aboutText:setFillColor(0,0,0)
+	aboutText.anchorX = 0
+	sceneGroup:insert(rect)
+	sceneGroup:insert(aboutText)
 
-	-- create/position logo/title image on upper-half of the screen
-	local titleLogo = display.newImageRect( "logo.png", 264, 42 )
-	titleLogo.x = display.contentWidth * 0.5
-	titleLogo.y = 100
 
-	-- create a widget button (which will loads level1.lua on release)
-	playBtn = widget.newButton{
-		label="Play",
-		labelColor = { default={000}, over={128} },
-		default="button.png",
-		over="button-over.png",
-		width=154, height=40,
-		onRelease = onPlayBtnRelease	-- event listener function
-	}
-	playBtn.x = display.contentWidth*0.5
-	playBtn.y = display.contentHeight - 155
-
-	-- create a widget button (which will loads level1.lua on release)
-	optButton = widget.newButton{
-		label="Options",
-		labelColor = { default={000}, over={128} },
-		default="button.png",
-		over="button-over.png",
-		width=154, height=40,
-		onRelease = onOptButtonRelease	-- event listener function
-	}
-	optButton.x = display.contentWidth*0.5
-	optButton.y = display.contentHeight - 125
-
-	-- all display objects must be inserted into group
-	sceneGroup:insert( background )
-	sceneGroup:insert( titleLogo )
-	sceneGroup:insert( playBtn )
-	sceneGroup:insert( optButton )
 end
 
 function scene:show( event )
@@ -118,11 +78,6 @@ function scene:destroy( event )
 	--
 	-- INSERT code here to cleanup the scene
 	-- e.g. remove display objects, remove touch listeners, save state, etc.
-
-	if playBtn then
-		playBtn:removeSelf()	-- widgets must be manually removed
-		playBtn = nil
-	end
 end
 
 ---------------------------------------------------------------------------------

@@ -17,6 +17,7 @@ local runtime = 0
 
 local barrel, text
 local pontos = 0
+local contador = 0
 local delayGerarPedra = 2600
 
 -- Set Variables
@@ -46,10 +47,10 @@ local function move(event)
 
 		delayGerarPedra = 4000 - (pontos * 100)
 
-		physics.setGravity( 0, 9.6 + pontos )
+		physics.setGravity( 0, 9.6 + contador * 2 )
 
 		-- move backgrounds to the left by scrollSpeed, default is 8
-		local velocidade = scrollSpeed + (pontos/10)
+		local velocidade = scrollSpeed + (contador/10)
 		bg1.y = bg1.y - velocidade
 		bg2.y = bg2.y - velocidade
 		bg3.y = bg3.y - velocidade
@@ -71,7 +72,9 @@ end
 local count = 1
 local function gerarPedra(sceneGroup)
 		local qtPedras = math.random(1,2)
+		local xAnterior = 0
 		for i = 1, qtPedras do
+
 				local barrelDrop = display.newImageRect( "rock.png", 50, 50 )
 				local posX = math.random(1,3)
 				local pos = {
@@ -79,6 +82,14 @@ local function gerarPedra(sceneGroup)
 				  [2] = function (barrel) barrel.x= (_W / 3) + 50 end,
 				  [3] = function (barrel)barrel.x= _W - 80 end
 				}
+				if i == 1 then
+					xAnterior = posX
+				elseif i > 1 and posX == xAnterior then
+					while posX == xAnterior do
+						posX = math.random(1,3)
+					end
+				end
+
 				pos[posX](barrelDrop)
 				barrelDrop.y = -50
 				count = count + 1
@@ -104,18 +115,19 @@ end
 local function fire(sceneGroup)
 local beam = {}
 
-	for i = 1, 100 do
+	for i = 1, 50 do
 		local particle = display.newCircle(0,0.7,5.5)
 		beam[i] = particle
 		beam[i]:setFillColor( 1.0, 1.0, 1.0 )
 		beam[i].x, beam[i].y = math.random(barrel.x - 30,barrel.x + 30) ,  math.random(barrel.y+20,barrel.y + 40)
 		beam[i].alpha = 0.6
-		beam[i].trans = transition.to(beam[i], { x = barrel.x , y = barrel.y - math.random (190, 250), alpha = 0.0, time = math.random(1000, 1200), delay = 100, onComplete = function() if beam[i] then beam[i]:removeSelf() end end })
+		beam[i].trans = transition.to(beam[i], { x = barrel.x , y = barrel.y - math.random (190, 250), alpha = 0.0, time = math.random(1000, 1200), delay = 100, onComplete = function() if beam[i] then beam[i]:removeSelf() beam[i] = nil end end })
 	end
 end
 local texto = display.newText( "Pontos: "..pontos, _W - 50, _H - _H - 20, native.systemFont, 16 )
 local function atualizarPontos(sceneGroup)
 	pontos = pontos +1
+	contador = contador + 2
 	texto.text = "Pontos: "..pontos
 end
 
@@ -211,14 +223,16 @@ scene:addEventListener( "destroy", scene )
 -----------------------------------------------------------------------------------------
 
 -------------------Eventos do teclado--------------------------------------
+local splashSound = audio.loadSound( "water-splash.wav" )
 local action = {
-  [-1] = function (barrel) barrel.x=(_W / 3 ) - 20 end,
-  [0] = function (barrel) barrel.x= (_W / 3) + 50 end,
-  [1] = function (barrel)barrel.x= _W - 80 end
+  [-1] = function (barrel) transition.to( barrel, { time=50, x=(_W / 3 ) - 20 } ) end,
+  [0] = function (barrel) transition.to( barrel, { time=50, x=(_W / 3) + 50 } ) end,
+  [1] = function (barrel) transition.to( barrel, { time=50, x=_W - 80 } ) end
 }
 local countArrow = 0
 -- Called when a key event has been received
 local function onKeyEvent( event )
+		-- transition.to( rect.path, { time=2000, height=100, x1=0 } )
     -- Print which key was pressed down/up
     local message = "Key '" .. event.keyName .. "' was pressed " .. event.phase
     print( message )
@@ -226,10 +240,11 @@ local function onKeyEvent( event )
 		    -- If the "back" key was pressed on Android or Windows Phone, prevent it from backing out of the app
 		    if ( event.keyName == "left" and countArrow>-1) then
 					countArrow = countArrow-1
+					audio.play(splashSound)
 		    end
-
 				if ( event.keyName == "right" and countArrow<1) then
 					countArrow = countArrow+1
+					audio.play(splashSound)
 				end
 
 				action[countArrow](barrel)
@@ -239,22 +254,47 @@ local function onKeyEvent( event )
     return false
 end
 
+--------------------------------------- swipe events ------------------------------
+local function handleSwipe( event )
+		print(event.phase)
+    if ( event.phase == "ended" ) then
+        local dX = event.x - event.xStart
+        print( countArrow )
+        if ( dX > 10 and countArrow<1) then
+            --swipe right
+            countArrow = countArrow+1
+						audio.play(splashSound)
+        elseif ( dX < -10 and countArrow>-1) then
+            --swipe left
+						countArrow = countArrow-1
+						audio.play(splashSound)
+        end
+				action[countArrow](barrel)
+    end
+    return true
+end
+
+Runtime:addEventListener( "touch", handleSwipe )
+
 -- Collision event
-local laserSound = audio.loadSound( "rock-crash.wav" )
+local rockSound = audio.loadSound( "rock-crash.wav" )
 
 local function onGlobalCollision( event )
-		local laserChannel = audio.play( laserSound )
-    if ( event.object1.myName == "Pedra" ) then
-        event.object1:removeSelf()
-		end
+		audio.play( rockSound )
 		if ( event.object1.myName == "Barril" ) then
         pontos = pontos -10
+				scrollSpeed = scrollSpeed + 0.05
 				if pontos < 0 then
 					pontos = 0
 				end
 		end
+		if ( event.object1.myName == "Pedra" ) then
+        event.object1:removeSelf()
+				event.object1 = nil
+		end
     if ( event.object2.myName == "Pedra" ) then
         event.object2:removeSelf()
+				event.object2 = nil
     end
 end
 
