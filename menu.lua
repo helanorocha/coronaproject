@@ -17,7 +17,7 @@ local playBtn
 
 -- 'onRelease' event listener for playBtn
 local function onPlayBtnRelease()
-
+audio.stop()
 	-- go to level1.lua scene
 	composer.gotoScene( "level1", "fade", 500 )
 
@@ -86,6 +86,10 @@ end
 function scene:show( event )
 	local sceneGroup = self.view
 	local phase = event.phase
+
+	local bgMusic = audio.loadStream("menu-song.mp3")
+	audio.setVolume( 0.50 , { channel=1 })
+	audio.play(bgMusic, {loops = -1, channel = 1, fadein = 2000})
 
 	if phase == "will" then
 		-- Called when the scene is still off screen and is about to move on screen

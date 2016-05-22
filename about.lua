@@ -19,27 +19,30 @@ local widget = require "widget"
 
 local function onBackButtonRelease()
 
-	composer.gotoScene( "options", "fade", 500 )
+	composer.gotoScene( "menu", "fade", 500 )
 
 	return true
 end
 
 function scene:create( event )
 	local sceneGroup = self.view
-	display.setDefault("fillColor", 1.0, 1.0, 1.0, 1.0)
-	-- Called when the scene's view does not exist.
-	--
-	-- INSERT code here to initialize the scene
-	-- e.g. add display objects to 'sceneGroup', add touch listeners, etc.
-	local rect = display.newRect(150,150,display.contentWidth,display.contentHeight)
+	local background = display.newImageRect( "gameover.jpg", display.contentWidth, display.contentHeight )
+	background.anchorX = 0
+	background.anchorY = 0
+	background.x, background.y = 0, 0
+	timer.performWithDelay(2000, goBack, 1);
+	-- all display objects must be inserted into group
+	backBtn = widget.newButton{
+		label="Back",
+		labelColor = { default={255}, over={128} },
+		default="button.png",
+		over="button-over.png",
+		width=154, height=40,
+		onRelease = onBackButtonRelease	-- event listener function
+	}
 
-	local aboutText = display.newText("Hello, is it me youre looking for.... I can see it in your eyes, I can see it in your smile..... youre all ive ever wanted... but its all open wide.....", 0, 40, nil, nil, 150, 150)
-	aboutText.x = 0; aboutText.y = 10
-	aboutText:setFillColor(0,0,0)
-	aboutText.anchorX = 0
-	sceneGroup:insert(rect)
-	sceneGroup:insert(aboutText)
-
+	backBtn.x = display.contentWidth*0.5
+	backBtn.y = display.contentHeight - 125
 
 end
 
