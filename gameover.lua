@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------------------
 --
--- menu.lua
+-- gameover.lua
 --
 -----------------------------------------------------------------------------------------
 
@@ -34,7 +34,7 @@ function scene:create( event )
 	background.anchorX = 0
 	background.anchorY = 0
 	background.x, background.y = 0, 0
-	audio.setVolume( 0.40 , { channel=1 }) 
+	audio.setVolume( 0.40 , { channel=1 })
 	local gameoverSound = audio.loadSound("gameover.wav");
 	audio.play( gameoverSound )
 	local goBack = function() return composer.gotoScene( "menu", "fade", 500 ) end

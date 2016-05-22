@@ -1,4 +1,4 @@
------------------------------------------------------------------------------------------
+	-----------------------------------------------------------------------------------------
 --
 -- level1.lua
 --
@@ -29,17 +29,17 @@ scrollSpeed = 2; -- Set Scroll Speed of background
 local bg1, bg2, bg3
 local function createBackground(sceneGroup)
 		-- Add First Background
-		bg1 = display.newImageRect("water.jpg", 320, 480)
+		bg1 = display.newImageRect("bg.png", 320, 480)
 		bg1.anchorX = 0; bg1.anchorY = 0.0;
 		bg1.x = 0; bg1.y = 0;
 		sceneGroup:insert(bg1)
 		-- Add Second Background
-		bg2 = display.newImageRect("water.jpg", 320, 480)
+		bg2 = display.newImageRect("bg.png", 320, 480)
 		bg2.anchorX = 0.0; bg2.anchorY = 0.0;
 		bg2.x = 0; bg2.y = bg1.y+480;
 		sceneGroup:insert(bg2)
 		-- Add Third Background
-		bg3 = display.newImageRect("water.jpg", 320, 480)
+		bg3 = display.newImageRect("bg.png", 320, 480)
 		bg3.anchorX = 0.0; bg3.anchorY = 0.0;
 		bg3.x = 0; bg3.y = bg2.y+480;
 		sceneGroup:insert(bg3)
@@ -48,7 +48,7 @@ end
 local function move(event)
 
 		delayGerarPedra = 4000 - (pontos * 100)
-
+		physics.start();
 		physics.setGravity( 0, 9.6 + contador * 2 )
 
 		-- move backgrounds to the left by scrollSpeed, default is 8
@@ -70,19 +70,29 @@ local function move(event)
 		end
 end
 
+function tablelength(T)
+  local count = 0
+  for _ in pairs(T) do count = count + 1 end
+  return count
+end
+
 --- gerar pedra
 local count = 1
 local function gerarPedra(sceneGroup)
+		local imgSelect = math.random(1,2)
 		local qtPedras = math.random(1,2)
 		local xAnterior = 0
 		for i = 1, qtPedras do
-
-				local barrelDrop = display.newImageRect( "rock.png", 50, 50 )
+				local imgName = "rock.png"
+				if imgSelect % 2 == 0 then
+					imgName = "rock.png"
+				end
+				local barrelDrop = display.newImageRect( imgName, 50, 50 )
 				local posX = math.random(1,3)
 				local pos = {
 				  [1] = function (barrel) barrel.x=(_W / 3 ) - 20 end,
 				  [2] = function (barrel) barrel.x= (_W / 3) + 50 end,
-				  [3] = function (barrel)barrel.x= _W - 80 end
+				  [3] = function (barrel)barrel.x= _W - 85 end
 				}
 				if i == 1 then
 					xAnterior = posX
@@ -103,11 +113,19 @@ local function gerarPedra(sceneGroup)
 		end
 end
 
+local function rebolaPiranha()
+	local piranha = display.newImageRect( "piranha.png", 40, 40 );
+	piranha.x, piranha.y = 0, 20
+	physics.addBody( piranha, "dynamic",{ density=1, friction=0.5 })
+
+	piranha:applyLinearImpulse(20, 50, piranha.x, piranha.y)
+	piranha.myName = 'Piranha'
+end
 -- forward declarations and other locals
 local screenW, screenH, halfW = display.contentWidth, display.contentHeight, display.contentWidth*0.5
 
 --movimentação inical do barril
-local moveBarrelTimer, gerarPedraTimer, atualizarPontosTimer, particleTimer
+local moveBarrelTimer, gerarPedraTimer, atualizarPontosTimer, particleTimer, rebolaPiranhaTimer
 local function moveBarrel()
 	if barrel.y < _H/2 then
 		barrel.y = barrel.y + 3
@@ -120,8 +138,8 @@ end
 local function fire(sceneGroup)
 local beam = {}
 
-	for i = 1, 50 do
-		local particle = display.newCircle(0,0.7,5.5)
+	for i = 1, 30 do
+		local particle = display.newCircle(0,0.7,4.5)
 		beam[i] = particle
 		beam[i]:setFillColor( 1.0, 1.0, 1.0 )
 		beam[i].x, beam[i].y = math.random(barrel.x - 30,barrel.x + 30) ,  math.random(barrel.y+20,barrel.y + 40)
@@ -129,11 +147,24 @@ local beam = {}
 		beam[i].trans = transition.to(beam[i], { x = barrel.x , y = barrel.y - math.random (190, 250), alpha = 0.0, time = math.random(1000, 1200), delay = 100, onComplete = function() if beam[i] then beam[i]:removeSelf() beam[i] = nil end end })
 	end
 end
+
 local texto = display.newText( "Pontos: "..pontos, _W - 50, _H - _H - 20, native.systemFont, 16 )
+
+
+local function winGame()
+	audio.setVolume( 0.50 , { channel=3 })
+	local gameoverSound = audio.loadSound("win.mp3");
+	audio.play( gameoverSound )
+end
+
 local function atualizarPontos(sceneGroup)
 	pontos = pontos +1
 	contador = contador + 2
 	texto.text = "Pontos: "..pontos
+
+	if pontos % 10 == 0 then
+   winGame()
+	end
 end
 
 local function updateLives()
@@ -154,26 +185,11 @@ function scene:create( event )
 
 	local sceneGroup = self.view
 	createBackground(sceneGroup)
-	
-	local bgMusic = audio.loadStream("the-fall-song.mp3")
-	audio.setVolume( 0.50 , { channel=1 }) 
-	audio.play(bgMusic, {loops = -1, channel = 1, fadein = 2000})
-	
-	local bgFx = audio.loadStream("waterfall.mp3")
-	audio.setVolume( 0.10 , { channel=2 }) 
-	audio.play(bgFx, {loops = -1, channel = 2, fadein = 2000})
-	
-	for i = 1, lifeCount do
-		local life = display.newImageRect( "Barrel.png", 15, 15 )
-		life.x, life.y = 0 + i*20, 5;
-		lives[i] = life
-	end
 
 	-- make a barrel (off-screen), position it, and rotate slightly
-	barrel = display.newImageRect( "Barrel.png", 60, 60 )
+	barrel = display.newImageRect( "barrel_2.png", 80, 85 )
 	barrel.x, barrel.y = (_W/3) + 50, _H - _H - 50
-	local callfire = function() return fire(sceneGroup) end
-	particleTimer = timer.performWithDelay(200, fire, -1)
+
 	barrel.rotation = 0
 	barrel.myName = 'Barril'
 
@@ -185,11 +201,8 @@ function scene:create( event )
 	sceneGroup:insert( barrel )
 
 	-- chamando gerarOBJETOS aleatorios
-	local generate = function() return gerarPedra(sceneGroup) end
 	sceneGroup:insert(texto)
-	gerarPedraTimer = timer.performWithDelay(delayGerarPedra, generate, -1)
-	moveBarrelTimer = timer.performWithDelay(50, moveBarrel, -1)
-	atualizarPontosTimer = timer.performWithDelay(1000, atualizarPontos, -1)
+
 
 end
 
@@ -200,10 +213,36 @@ function scene:show( event )
 	if phase == "will" then
 		-- Called when the scene is still off screen and is about to move on screen
 	elseif phase == "did" then
-		-- Called when the scene is now on screen
-		--
-		-- INSERT code here to make the scene come alive
-		-- e.g. start timers, begin animation, play audio, etc
+    local bgMusic = audio.loadStream("the-fall-song.mp3")
+    audio.setVolume( 0.50 , { channel=1 })
+    audio.play(bgMusic, {loops = -1, channel = 1, fadein = 2000})
+
+    local bgFx = audio.loadStream("waterfall.mp3")
+    audio.setVolume( 0.10 , { channel=2 })
+    audio.play(bgFx, {loops = -1, channel = 2, fadein = 2000})
+
+		lifeCount = 3
+		pontos = 0
+		contador = 0
+
+		barrel.x, barrel.y = (_W/3) + 50, _H - _H - 50
+
+    for i = 1, lifeCount do
+      local life = display.newImageRect( "barrel_2.png", 25, 30 )
+      life.x, life.y = 0 + i*28, 5;
+      lives[i] = life
+    end
+
+    local callfire = function() return fire(sceneGroup) end
+  	particleTimer = timer.performWithDelay(200, fire, -1)
+
+		local generate = function() return gerarPedra(sceneGroup) end
+
+		gerarPedraTimer = timer.performWithDelay(delayGerarPedra, generate, -1)
+		moveBarrelTimer = timer.performWithDelay(50, moveBarrel, -1)
+		atualizarPontosTimer = timer.performWithDelay(1000, atualizarPontos, -1)
+		rebolaPiranhaTimer = timer.performWithDelay(delayGerarPedra + 200, rebolaPiranha, -1)
+
 		physics.start()
 	end
 
@@ -247,13 +286,15 @@ scene:addEventListener( "hide", scene )
 scene:addEventListener( "destroy", scene )
 
 -----------------------------------------------------------------------------------------
-local function gameOver() 
+local function gameOver()
 	timer.cancel(atualizarPontosTimer);
 	timer.cancel(gerarPedraTimer);
 	timer.cancel(particleTimer);
-	audio.stop()
+	timer.cancel(rebolaPiranhaTimer);
+	audio.stop();
 	composer.gotoScene( "gameover", "fade", 500 );
 end
+
 -------------------Eventos do teclado--------------------------------------
 local splashSound = audio.loadSound( "water-splash.wav" )
 local action = {
@@ -325,11 +366,11 @@ local function onGlobalCollision( event )
 					pontos = 0
 				end
 		end
-		if ( event.object1.myName == "Pedra" ) then
+		if ( (event.object1.myName == "Pedra" or event.object1.myName == "Piranha") and event.object2.myName == "Barril" ) then
         event.object1:removeSelf()
 				event.object1 = nil
 		end
-    if ( event.object2.myName == "Pedra" ) then
+    if ( (event.object2.myName == "Pedra" or event.object2.myName == "Piranha") and event.object1.myName == "Barril") then
         event.object2:removeSelf()
 				event.object2 = nil
     end
