@@ -154,9 +154,15 @@ function scene:create( event )
 
 	local sceneGroup = self.view
 	createBackground(sceneGroup)
-	local bgMusic = audio.loadStream("waterfall.mp3")
-	audio.setVolume( 0.10 , { channel=1 }) 
+	
+	local bgMusic = audio.loadStream("the-fall-song.mp3")
+	audio.setVolume( 0.50 , { channel=1 }) 
 	audio.play(bgMusic, {loops = -1, channel = 1, fadein = 2000})
+	
+	local bgFx = audio.loadStream("waterfall.mp3")
+	audio.setVolume( 0.10 , { channel=2 }) 
+	audio.play(bgFx, {loops = -1, channel = 2, fadein = 2000})
+	
 	for i = 1, lifeCount do
 		local life = display.newImageRect( "Barrel.png", 15, 15 )
 		life.x, life.y = 0 + i*20, 5;
