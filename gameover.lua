@@ -13,25 +13,13 @@ local widget = require "widget"
 --------------------------------------------
 
 -- forward declarations and other locals
-local playBtn
+
 
 -- 'onRelease' event listener for playBtn
-local function onAboutBtnRelease()
 
-	-- go to level1.lua scene
-	composer.gotoScene( "about", "fade", 500 )
-
-	return true	-- indicates successful touch
-end
 
 --  'onRelease' even listener options
 
-local function onBackButtonRelease()
-
-	composer.gotoScene( "menu", "fade", 500 )
-
-	return true
-end
 
 function scene:create( event )
 	local sceneGroup = self.view
@@ -41,72 +29,18 @@ function scene:create( event )
 	-- INSERT code here to initialize the scene
 	-- e.g. add display objects to 'sceneGroup', add touch listeners, etc.
 
-  local background = display.newImageRect( "background.jpg", display.contentWidth, display.contentHeight )
+	-- display a background image
+	local background = display.newImageRect( "gameover.jpg", display.contentWidth, display.contentHeight )
 	background.anchorX = 0
 	background.anchorY = 0
 	background.x, background.y = 0, 0
-
-	-- create a widget button (which will loads level1.lua on release)
-	soundLabel = widget.newButton{
-		label="Enable sound: ",
-		labelColor = { default={000}, over={000} },
-		default="button.png",
-		over="button.png",
-		width=154, height=40
-	}
-	soundLabel.x = display.contentWidth*0.4
-	soundLabel.y = display.contentHeight - 175
-
-  soundYes = widget.newButton{
-    label="Yes",
-    labelColor = { default={000}, over={128} },
-    default="button.png",
-    over="button-over.png",
-    width=30, height=40
-  }
-  soundYes.x = (display.contentWidth*0.4) + 70
-  soundYes.y = display.contentHeight - 175
-
-  soundNo = widget.newButton{
-    label="No",
-    labelColor = { default={000}, over={128} },
-    default="button.png",
-    over="button-over.png",
-    width=30, height=40
-  }
-  soundNo.x = (display.contentWidth*0.4) + 100
-  soundNo.y = display.contentHeight - 175
-
-	-- create a widget button (which will loads level1.lua on release)
-	backBtn = widget.newButton{
-		label="Back",
-		labelColor = { default={000}, over={128} },
-		default="button.png",
-		over="button-over.png",
-		width=154, height=40,
-		onRelease = onBackButtonRelease	-- event listener function
-	}
-	backBtn.x = display.contentWidth*0.5
-	backBtn.y = display.contentHeight - 125
-
-  aboutBtn = widget.newButton{
-		label="About",
-		labelColor = { default={000}, over={128} },
-		default="button.png",
-		over="button-over.png",
-		width=154, height=40,
-		onRelease = onAboutBtnRelease	-- event listener function
-	}
-	aboutBtn.x = display.contentWidth*0.5
-	aboutBtn.y = display.contentHeight - 148
-
+	audio.setVolume( 0.40 , { channel=1 }) 
+	local gameoverSound = audio.loadSound("gameover.wav");
+	audio.play( gameoverSound )
+	local goBack = function() return composer.gotoScene( "menu", "fade", 500 ) end
+	timer.performWithDelay(2000, goBack, 1);
 	-- all display objects must be inserted into group
-  sceneGroup:insert( background )
-	sceneGroup:insert( soundLabel )
-  sceneGroup:insert( soundYes )
-  sceneGroup:insert( soundNo )
-  sceneGroup:insert( backBtn )
-  sceneGroup:insert( aboutBtn )
+	sceneGroup:insert( background )
 end
 
 function scene:show( event )

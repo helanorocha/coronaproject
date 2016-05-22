@@ -19,6 +19,8 @@ local barrel, text
 local pontos = 0
 local contador = 0
 local delayGerarPedra = 2600
+local lives = {}
+local lifeCount = 3
 
 -- Set Variables
 _W = display.contentWidth; -- Get the width of the screen
@@ -105,9 +107,12 @@ end
 local screenW, screenH, halfW = display.contentWidth, display.contentHeight, display.contentWidth*0.5
 
 --movimentação inical do barril
+local moveBarrelTimer, gerarPedraTimer, atualizarPontosTimer, particleTimer
 local function moveBarrel()
 	if barrel.y < _H/2 then
 		barrel.y = barrel.y + 3
+	else
+		timer.cancel(moveBarrelTimer)
 	end
 end
 
@@ -131,6 +136,15 @@ local function atualizarPontos(sceneGroup)
 	texto.text = "Pontos: "..pontos
 end
 
+local function updateLives()
+	for i = 1, 3 do
+		lives[i].isVisible = false;
+	end
+	for i = 1, lifeCount do
+		lives[i].isVisible = true;
+	end
+end
+
 function scene:create( event )
 
 	-- Called when the scene's view does not exist.
@@ -140,14 +154,20 @@ function scene:create( event )
 
 	local sceneGroup = self.view
 	createBackground(sceneGroup)
-	-- create a grey rectangle as the backdrop
-
+	local bgMusic = audio.loadStream("waterfall.mp3")
+	audio.setVolume( 0.10 , { channel=1 }) 
+	audio.play(bgMusic, {loops = -1, channel = 1, fadein = 2000})
+	for i = 1, lifeCount do
+		local life = display.newImageRect( "Barrel.png", 15, 15 )
+		life.x, life.y = 0 + i*20, 5;
+		lives[i] = life
+	end
 
 	-- make a barrel (off-screen), position it, and rotate slightly
 	barrel = display.newImageRect( "Barrel.png", 60, 60 )
 	barrel.x, barrel.y = (_W/3) + 50, _H - _H - 50
 	local callfire = function() return fire(sceneGroup) end
-	timer.performWithDelay(200, fire, -1)
+	particleTimer = timer.performWithDelay(200, fire, -1)
 	barrel.rotation = 0
 	barrel.myName = 'Barril'
 
@@ -161,9 +181,9 @@ function scene:create( event )
 	-- chamando gerarOBJETOS aleatorios
 	local generate = function() return gerarPedra(sceneGroup) end
 	sceneGroup:insert(texto)
-	timer.performWithDelay(delayGerarPedra, generate, -1)
-	timer.performWithDelay(50, moveBarrel, 5000)
-	timer.performWithDelay(1000, atualizarPontos, -1)
+	gerarPedraTimer = timer.performWithDelay(delayGerarPedra, generate, -1)
+	moveBarrelTimer = timer.performWithDelay(50, moveBarrel, -1)
+	atualizarPontosTimer = timer.performWithDelay(1000, atualizarPontos, -1)
 
 end
 
@@ -221,7 +241,13 @@ scene:addEventListener( "hide", scene )
 scene:addEventListener( "destroy", scene )
 
 -----------------------------------------------------------------------------------------
-
+local function gameOver() 
+	timer.cancel(atualizarPontosTimer);
+	timer.cancel(gerarPedraTimer);
+	timer.cancel(particleTimer);
+	audio.stop()
+	composer.gotoScene( "gameover", "fade", 500 );
+end
 -------------------Eventos do teclado--------------------------------------
 local splashSound = audio.loadSound( "water-splash.wav" )
 local action = {
@@ -280,9 +306,14 @@ Runtime:addEventListener( "touch", handleSwipe )
 local rockSound = audio.loadSound( "rock-crash.wav" )
 
 local function onGlobalCollision( event )
-		audio.play( rockSound )
 		if ( event.object1.myName == "Barril" ) then
-        pontos = pontos -10
+		audio.play( rockSound );
+		lifeCount = lifeCount - 1;
+		updateLives();
+		if lifeCount < 1 then
+			gameOver();
+		end
+        pontos = pontos -3
 				scrollSpeed = scrollSpeed + 0.05
 				if pontos < 0 then
 					pontos = 0
