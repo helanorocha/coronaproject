@@ -26,7 +26,7 @@ end
 
 function scene:create( event )
 	local sceneGroup = self.view
-	local background = display.newImageRect( "gameover.jpg", display.contentWidth, display.contentHeight )
+	local background = display.newImageRect( "about.jpg", display.contentWidth, display.contentHeight )
 	background.anchorX = 0
 	background.anchorY = 0
 	background.x, background.y = 0, 0
